@@ -1,4 +1,4 @@
-defmodule Jelixir do
+defmodule JelixirLib do
   def conver(file_name_string) do
     with {:read_file_result, {:ok, json_string}} <-
            {:read_file_result, read_file(file_name_string)},
@@ -118,14 +118,14 @@ defmodule Jelixir do
   end
 
   # test:
-  # iex> Jelixir.filed_name("createdAt") == "created_at"
+  # iex> Jelixir.filed_name("createdAt1") == "created_at1"
   # true
-  defp filed_name(name) do
+  def filed_name(name) do
     name
     |> String.graphemes()
-    |> Enum.reduce("", fn x, acc ->
+    |> Enum.reduce(fn x, acc ->
       acc <>
-        if x == String.upcase(x) do
+        if x == String.upcase(x) && x != String.downcase(x) do
           "_#{String.downcase(x)}"
         else
           x
