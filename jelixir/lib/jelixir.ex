@@ -1,10 +1,15 @@
 defmodule JelixirLib do
+  @default_folder "jelixir"
   def conver(file_name_string) do
     with {:read_file_result, {:ok, json_string}} <-
            {:read_file_result, read_file(file_name_string)},
          {:name_result, name} <- {:name_result, String.split(file_name_string, ".") |> hd},
          {:node_status, {:ok, node_result}} <-
            {:node_status, Poison.Parser.parse!(json_string) |> travel()} do
+      if !File.exists?(@default_folder) do
+        File.mkdir(@default_folder)
+      end
+
       create_schema(name, node_result)
       create_migration(name, node_result)
     else
@@ -34,7 +39,7 @@ defmodule JelixirLib do
     if is_map(node) do
       list_filed =
         node
-        |> Enum.map(fn {k, v} -> {filed_name(k), get_type(v)} end)
+        |> Enum.map(fn {k, v} -> {k, get_type(v)} end)
         |> Enum.into(%{})
 
       {:ok, list_filed}
@@ -104,7 +109,8 @@ defmodule JelixirLib do
   end
 
   def save(name, content) do
-    {:ok, file} = File.open(name, [:write])
+    file_path = "#{@default_folder}/#{name}"
+    {:ok, file} = File.open(file_path, [:write])
     IO.binwrite(file, content)
     File.close(file)
   end
