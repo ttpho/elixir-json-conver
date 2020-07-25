@@ -1,13 +1,14 @@
 defmodule JelixirLib do
-  @default_folder "jelixir"
+  @default_folder_out "jelixir"
+  @default_folder_template "lib/template"
   def conver(file_name_string) do
     with {:read_file_result, {:ok, json_string}} <-
            {:read_file_result, read_file(file_name_string)},
          {:name_result, name} <- {:name_result, String.split(file_name_string, ".") |> hd},
          {:node_status, {:ok, node_result}} <-
            {:node_status, Poison.Parser.parse!(json_string) |> travel()} do
-      if !File.exists?(@default_folder) do
-        File.mkdir(@default_folder)
+      if !File.exists?(@default_folder_out) do
+        File.mkdir(@default_folder_out)
       end
 
       create_schema(name, node_result)
@@ -69,7 +70,7 @@ defmodule JelixirLib do
       end)
 
     new_content =
-      EEx.eval_file("schema_template.eex",
+      EEx.eval_file(file_path_template("schema.eex"),
         capitalize_module_name: capitalize_module_name,
         schema_name: schema_name,
         all_fileds_string: all_fileds_string
@@ -99,7 +100,7 @@ defmodule JelixirLib do
       end)
 
     new_content =
-      EEx.eval_file("migration_template.eex",
+      EEx.eval_file(file_path_template("migration.eex"),
         capitalize_module_name: capitalize_module_name,
         schema_name: schema_name,
         all_fileds_string: all_fileds_string
@@ -108,8 +109,10 @@ defmodule JelixirLib do
     save(file_name, new_content)
   end
 
+  defp file_path_template(name), do: "#{@default_folder_template}/#{name}"
+
   def save(name, content) do
-    file_path = "#{@default_folder}/#{name}"
+    file_path = "#{@default_folder_out}/#{name}"
     {:ok, file} = File.open(file_path, [:write])
     IO.binwrite(file, content)
     File.close(file)
