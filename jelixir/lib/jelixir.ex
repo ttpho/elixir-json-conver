@@ -24,10 +24,6 @@ defmodule JelixirLib do
     end
   end
 
-  defmodule JelixirSchema do
-    defstruct module_name: "", schema_name: "", list_filed: %{}
-  end
-
   def conver(task, file_name_string) when task == :schema do
     with {:read_file_result, {:ok, file_content}} <-
            {:read_file_result, read_file(file_name_string, ".ex")} do
