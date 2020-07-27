@@ -1,10 +1,10 @@
 defmodule JelixirLib do
   @default_folder_out "jelixir"
   @default_folder_template "lib/template"
-  # Regex Pattern from @quangvo90
+  # Regex Pattern from GitHub User ID: @quangvo90
   @regex_pattern_module_name ~r/defmodule\s+([0-9a-z_-]+)\s+do/im
   @regex_pattern_schema_name ~r/schema\s+"([0-9a-z_-]+)"\s+do/im
-  @regex_pattern_filed ~r/field\s{0,}\(?\s{0,}:([0-9a-z_-]+),\s{0,}:([0-9a-z_-]+)\)?/im
+  @regex_pattern_field ~r/field\s{0,}\(?\s{0,}:([0-9a-z_-]+),\s{0,}:([0-9a-z_-]+)\)?/im
 
   def conver(task, file_name_string) when task in [:json, :phx] do
     with {:read_file_result, {:ok, json_string}} <-
@@ -42,11 +42,7 @@ defmodule JelixirLib do
       module_name = parse_schema_result["module_name"]
       schema_name = parse_schema_result["schema_name"]
 
-      node_result =
-        parse_schema_result
-        |> Map.delete("module_name")
-        |> Map.delete("schema_name")
-
+      node_result = Map.drop(parse_schema_result, ["module_name", "schema_name"])
       create_gen(module_name, schema_name, node_result)
     else
       {:read_file_result, _} -> IO.inspect("Can't read file with name: #{file_name_string}")
@@ -58,42 +54,42 @@ defmodule JelixirLib do
     {:error, "No thing to do"}
   end
 
-  def read_line_schema(flat_line) do
-    cond do
-      String.contains?(flat_line, "defmodule") ->
-        module_name_result = Regex.run(@regex_pattern_module_name, flat_line)
-
-        if module_name_result do
-          module_name = Enum.at(module_name_result, 1)
-          {"module_name", module_name}
-        else
-          {"skip", nil}
-        end
-
-      String.contains?(flat_line, "schema") ->
-        schema_name_result = Regex.run(@regex_pattern_schema_name, flat_line)
-
-        if schema_name_result do
-          schema_name = Enum.at(schema_name_result, 1)
-          {"schema_name", schema_name}
-        else
-          {"skip", nil}
-        end
-
-      String.contains?(flat_line, "field") ->
-        filed_result = Regex.run(@regex_pattern_filed, flat_line)
-
-        if filed_result do
-          filed_name = Enum.at(filed_result, 1)
-          filed_type = Enum.at(filed_result, 2)
-          {filed_name, filed_type}
-        else
-          {"skip", nil}
-        end
-
-      true ->
-        {"skip", nil}
+  def read_line_schema(module_name_result, nil, nil) do
+    with false <- is_nil(module_name_result),
+         [_line, module_name] <- module_name_result do
+      {"module_name", module_name}
+    else
+      _ -> {:skip, nil}
     end
+  end
+
+  def read_line_schema(nil, schema_name_result, nil) do
+    with false <- is_nil(schema_name_result),
+         [_line, schema_name] <- schema_name_result do
+      {"schema_name", schema_name}
+    else
+      _ -> {:skip, nil}
+    end
+  end
+
+  def read_line_schema(nil, nil, pattern_field_result) do
+    with false <- is_nil(pattern_field_result),
+         [_line, field_name, field_type] <- pattern_field_result do
+      {field_name, ":#{field_type}"}
+    else
+      _ -> {:skip, nil}
+    end
+  end
+
+  def read_line_schema(_module_name_result, _schema_name_result, _pattern_field_result) do
+    {:skip, nil}
+  end
+
+  def read_line_schema(flat_line) do
+    module_name_result = Regex.run(@regex_pattern_module_name, flat_line)
+    schema_name_result = Regex.run(@regex_pattern_schema_name, flat_line)
+    pattern_field_result = Regex.run(@regex_pattern_field, flat_line)
+    read_line_schema(module_name_result, schema_name_result, pattern_field_result)
   end
 
   def create_file(:json, name, node_result) do
