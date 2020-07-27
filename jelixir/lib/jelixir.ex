@@ -36,7 +36,7 @@ defmodule JelixirLib do
         |> Enum.map(fn line ->
           line |> String.trim() |> read_line_schema()
         end)
-        |> Enum.filter(fn item -> item != {:skip, nil} end)
+        |> Enum.filter(fn item -> item != {"skip", nil} end)
         |> Enum.into(%{})
 
       module_name = parse_schema_result["module_name"]
@@ -59,7 +59,7 @@ defmodule JelixirLib do
          [_line, module_name] <- module_name_result do
       {"module_name", module_name}
     else
-      _ -> {:skip, nil}
+      _ -> {"skip", nil}
     end
   end
 
@@ -68,7 +68,7 @@ defmodule JelixirLib do
          [_line, schema_name] <- schema_name_result do
       {"schema_name", schema_name}
     else
-      _ -> {:skip, nil}
+      _ -> {"skip", nil}
     end
   end
 
@@ -77,12 +77,12 @@ defmodule JelixirLib do
          [_line, field_name, field_type] <- pattern_field_result do
       {field_name, ":#{field_type}"}
     else
-      _ -> {:skip, nil}
+      _ -> {"skip", nil}
     end
   end
 
   def read_line_schema(_module_name_result, _schema_name_result, _pattern_field_result) do
-    {:skip, nil}
+    {"skip", nil}
   end
 
   def read_line_schema(flat_line) do
