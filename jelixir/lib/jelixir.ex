@@ -107,7 +107,7 @@ defmodule JelixirLib do
 
   def create_gen(name, node_result) do
     schema_name = String.downcase(name)
-    module_name = schema_name |> String.capitalize()
+    module_name = String.capitalize(schema_name)
     create_gen(module_name, schema_name, node_result)
   end
 
